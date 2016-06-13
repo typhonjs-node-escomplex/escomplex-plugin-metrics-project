@@ -10,4 +10,4 @@
 [![Coverage](https://img.shields.io/codecov/c/github/typhonjs-node-escomplex/escomplex-plugin-metrics-project.svg)](https://codecov.io/github/typhonjs-node-escomplex/escomplex-plugin-metrics-project)
 [![Dependency Status](https://www.versioneye.com/user/projects/575e6ae27757a0004a1df0a9/badge.svg?style=flat)](https://www.versioneye.com/user/projects/575e6ae27757a0004a1df0a9)
 
-Provides the core project metric / report generation for ESComplex.
+Provides the core project metric / report generation plugin for typhonjs-escomplex project processing.
