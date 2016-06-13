@@ -154,13 +154,13 @@ export default class PluginMetricsProject
     * Implementation of Floyd Warshall algorithm for calculating visibility matrix in O(n^3) instead of O(n^4) with
     * successive raising of powers.
     *
-    * @param result
+    * @param {object}   results - The ESComplexProject results data.
     */
-   createVisibilityMatrix(result)
+   createVisibilityMatrix(results)
    {
       let changeCost = 0, i, j, k, visibilityMatrix;
 
-      visibilityMatrix = this.adjacencyToDistMatrix(result.adjacencyMatrix);
+      visibilityMatrix = this.adjacencyToDistMatrix(results.adjacencyMatrix);
       const matrixLen = visibilityMatrix.length;
 
       for (k = 0; k < matrixLen; k += 1)
@@ -196,8 +196,8 @@ export default class PluginMetricsProject
          });
       });
 
-      result.visibilityMatrix = visibilityMatrix;
-      result.changeCost = this.percentifyDensity(changeCost, visibilityMatrix);
+      results.visibilityMatrix = visibilityMatrix;
+      results.changeCost = this.percentifyDensity(changeCost, visibilityMatrix);
    }
 
    doesDependencyExist(from, to)
