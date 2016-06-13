@@ -1,20 +1,12 @@
 'use strict';
-/*
-import { assert }          from 'chai';
-import fs                  from 'fs';
-import walker              from 'typhonjs-ast-walker';
+import { assert }             from 'chai';
+import fs                     from 'fs';
 
-const s_PLUGIN_PATH =      '../../dist/PluginSyntaxESTree';
-
-suite('NPM require plugin:', () =>
-{
-   test('require does not throw', () => { assert.doesNotThrow(() => { require(s_PLUGIN_PATH); }); });
-});
+import PluginMetricsProject   from '../../src/PluginMetricsProject.js';
 
 const pluginData =
 [
-   { name: 'ESM', PluginClass: PluginSyntaxESTree },
-   { name: 'NPM', PluginClass: require(s_PLUGIN_PATH) }
+   { name: 'ESM', PluginClass: PluginMetricsProject }
 ];
 
 pluginData.forEach((plugin) =>
@@ -30,9 +22,19 @@ pluginData.forEach((plugin) =>
             assert.isObject(instance);
          });
 
-         test('plugin function is exported', () =>
+         test('plugin function onConfigure is exported', () =>
          {
-            assert.isFunction(instance.onLoadSyntax);
+            assert.isFunction(instance.onConfigure);
+         });
+
+         test('plugin function onProjectEnd is exported', () =>
+         {
+            assert.isFunction(instance.onProjectEnd);
+         });
+
+         test('plugin function onProjectStart is exported', () =>
+         {
+            assert.isFunction(instance.onProjectStart);
          });
       });
 
@@ -42,89 +44,50 @@ pluginData.forEach((plugin) =>
 
          test('plugin throws on empty event data', () =>
          {
-            assert.throws(() => { instance.onLoadSyntax(); });
+            assert.throws(() => { instance.onConfigure(); });
          });
 
          test('plugin does not throw on proper event data', () =>
          {
-            assert.doesNotThrow(() => { instance.onLoadSyntax({ data: { settings: {} } }); });
+            assert.doesNotThrow(() => { instance.onConfigure({ data: { options: {}, settings: {} } }); });
          });
 
          test('plugin passes back syntax data', () =>
          {
-            const event = { data: { settings: {} } };
-            instance.onLoadSyntax(event);
-            assert.isObject(event.data.syntaxes);
-         });
-
-         test('plugin has correct syntax data length', () =>
-         {
-            const event = { data: { settings: {} } };
-            instance.onLoadSyntax(event);
-            assert.strictEqual(Object.keys(event.data.syntaxes).length, 63);
-         });
-
-         test('plugin has correct syntax properties', () =>
-         {
-            const event = { data: { settings: {} } };
-            instance.onLoadSyntax(event);
-
-            for (const type in event.data.syntaxes)
-            {
-               assert.strictEqual(JSON.stringify(Object.keys(event.data.syntaxes[type])),
-                '["lloc","cyclomatic","operators","operands","ignoreKeys","newScope","dependencies"]');
-            }
+            const event = { data: { options: {}, settings: {} } };
+            instance.onConfigure(event);
+            assert.strictEqual(event.data.settings.noCoreSize, false);
          });
       });
 
-      suite('AST Walker:', () =>
+      suite('project results:', () =>
       {
          const instance = new plugin.PluginClass();
-         const verifyResult = JSON.stringify(JSON.parse(fs.readFileSync('./test/fixture/estree-results.json', 'utf8')));
 
-         test('verify espree results', () =>
+         const resultsAfter = JSON.parse(fs.readFileSync('./test/fixture/results-after.json', 'utf8'));
+         const resultsBefore = JSON.parse(fs.readFileSync('./test/fixture/results-before.json', 'utf8'));
+
+         /**
+          * Bootstraps the ESComplexProject runtime and fudges processing project results.
+          */
+         test('verify onProjectEnd results', () =>
          {
-            const results = {};
-            const event = { data: { settings: {} } };
-            instance.onLoadSyntax(event);
+            let event = { data: { options: {}, settings: {} } };
 
-            walker.traverse(JSON.parse(fs.readFileSync('./test/fixture/espree-estree.json', 'utf8')),
-            {
-               enterNode: (node, parent) =>
-               {
-                  const syntax = event.data.syntaxes[node.type];
+            instance.onConfigure(event);
 
-                  if (syntax !== null && typeof syntax === 'object')
-                  {
-                     if (typeof results[node.type] === 'undefined') { results[node.type] = {}; }
+            const settings = event.data.settings;
 
-                     for (const metric in syntax)
-                     {
-                        if (typeof results[node.type][metric] === 'undefined') { results[node.type][metric] = {}; }
+            event = { data: { settings } };
 
-                        const value = typeof syntax[metric] === 'function' ? syntax[metric](node, parent) :
-                         syntax[metric];
+            instance.onProjectStart(event);
 
-                        const valueKey = JSON.stringify(value);
+            event = { data: { results: resultsBefore } };
 
-                        if (typeof results[node.type][metric][valueKey] === 'undefined')
-                        {
-                           results[node.type][metric][valueKey] = 1;
-                        }
-                        else
-                        {
-                           results[node.type][metric][valueKey]++;
-                        }
-                     }
+            instance.onProjectEnd(event);
 
-                     return syntax.ignoreKeys;
-                  }
-               }
-            });
-
-            assert.strictEqual(verifyResult, JSON.stringify(sortObj(results)));
+            assert.strictEqual(JSON.stringify(event.data.results), JSON.stringify(resultsAfter));
          });
       });
    });
 });
-*/
