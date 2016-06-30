@@ -26,26 +26,48 @@ export default class PluginMetricsProject
        ev.data.options.noCoreSize : false;
    }
 
+   /**
+    * Performs final calculations based on collected results data.
+    *
+    * @param {object}   ev - escomplex plugin event data.
+    */
    onProjectEnd(ev)
    {
-      this.createAdjacencyMatrix(ev.data.results);
+      this._createAdjacencyMatrix(ev.data.results);
       if (!this.settings.noCoreSize)
       {
-         this.createVisibilityMatrix(ev.data.results);
-         this.setCoreSize(ev.data.results);
+         this._createVisibilityMatrix(ev.data.results);
+         this._setCoreSize(ev.data.results);
       }
 
-      this.calculateAverages(ev.data.results);
+      this._calculateAverages(ev.data.results);
    }
 
+   /**
+    * Stores settings and syntaxes.
+    *
+    * @param {object}   ev - escomplex plugin event data.
+    */
    onProjectStart(ev)
    {
+      /**
+       * Stores the settings for all ESComplexProject plugins.
+       * @type {object}
+       */
       this.settings = ev.data.settings;
    }
 
    // Project metrics calculation -----------------------------------------------------------------------------------
 
-   adjacencyToDistMatrix(matrix)
+   /**
+    * adjacencyToDistMatrix
+    *
+    * @param {Array} matrix -
+    *
+    * @returns {Array}
+    * @private
+    */
+   _adjacencyToDistMatrix(matrix)
    {
       const distMatrix = [];
       let i, j, value;
@@ -54,23 +76,23 @@ export default class PluginMetricsProject
          distMatrix.push([]);
          for (j = 0; j < matrix[i].length; j += 1)
          {
-            value = null;
-            if (i === j)
-            {
-               value = 1;
-            }
-            else
-            {
-               // where we have 0, set distance to Infinity
-               value = matrix[i][j] || Infinity;
-            }
+            // if i !== j and matrix value is undefined set distance to Infinity.
+            value = i === j ? 1 : matrix[i][j] || Infinity;
+
             distMatrix[i][j] = value;
          }
       }
       return distMatrix;
    }
 
-   calculateAverages(result)
+   /**
+    * calculateAverages
+    *
+    * @param {object}   results - The ESComplexProject results data.
+    *
+    * @private
+    */
+   _calculateAverages(results)
    {
       let divisor;
 
@@ -82,40 +104,67 @@ export default class PluginMetricsProject
          maintainability: 0
       };
 
-      if (result.reports.length === 0) { divisor = 1; }
-      else { divisor = result.reports.length; }
+      if (results.reports.length === 0) { divisor = 1; }
+      else { divisor = results.reports.length; }
 
-      result.reports.forEach((report) =>
+      results.reports.forEach((report) =>
       {
          Object.keys(sums).forEach((key) => { sums[key] += report[key]; });
       });
 
       Object.keys(sums).forEach((key) =>
       {
-         result[key] = sums[key] / divisor;
+         results[key] = sums[key] / divisor;
       });
    }
 
-   checkDependency(from, dependency, to)
+   /**
+    * checkDependency
+    *
+    * @param {string}   from -
+    * @param {object}   dependency -
+    * @param {string}   to -
+    *
+    * @returns {*}
+    * @private
+    */
+   _checkDependency(from, dependency, to)
    {
-      if (this.isCommonJSDependency(dependency))
+      // Handle CJS dependencies
+      if (dependency.type === 'cjs')
       {
-         if (this.isInternalCommonJSDependency(dependency)) { return this.isDependency(from, dependency, to); }
+         if (this._isInternalCommonJSDependency(dependency)) { return this._isDependency(from, dependency, to); }
 
          return false;
       }
 
-      return this.isDependency(from, dependency, to);
+      return this._isDependency(from, dependency, to);
    }
 
-   compareNumbers(lhs, rhs)
+   /**
+    * Compares two numbers.
+    *
+    * @param {number}   lhs - Left-hand side.
+    * @param {number}   rhs - Right-hand side.
+    *
+    * @returns {number}
+    * @private
+    */
+   _compareNumbers(lhs, rhs)
    {
-      if (lhs < rhs) { return -1; }
-      if (lhs > rhs) { return 1; }
-      return 0;
+      return lhs < rhs ? -1 : lhs > rhs ? 1 : 0;
    }
 
-   comparePaths(lhs, rhs)
+   /**
+    * Compares two paths.
+    *
+    * @param {string}   lhs - Left-hand side.
+    * @param {string}   rhs - Right-hand side.
+    *
+    * @returns {number}
+    * @private
+    */
+   _comparePaths(lhs, rhs)
    {
       const lsplit = lhs.split(path.sep);
       const rsplit = rhs.split(path.sep);
@@ -127,17 +176,24 @@ export default class PluginMetricsProject
       return 0;
    }
 
-   createAdjacencyMatrix(result)
+   /**
+    * createAdjacencyMatrix
+    *
+    * @param {object}   results - The ESComplexProject results data.
+    *
+    * @private
+    */
+   _createAdjacencyMatrix(results)
    {
-      const adjacencyMatrix = new Array(result.reports.length);
+      const adjacencyMatrix = new Array(results.reports.length);
       let density = 0;
 
-      result.reports.sort((lhs, rhs) => { return this.comparePaths(lhs.path, rhs.path); }).forEach((ignore, x) =>
+      results.reports.sort((lhs, rhs) => { return this._comparePaths(lhs.path, rhs.path); }).forEach((ignore, x) =>
       {
-         adjacencyMatrix[x] = new Array(result.reports.length);
-         result.reports.forEach((ignore, y) =>
+         adjacencyMatrix[x] = new Array(results.reports.length);
+         results.reports.forEach((ignore, y) =>
          {
-            adjacencyMatrix[x][y] = this.getAdjacencyMatrixValue(result.reports, x, y);
+            adjacencyMatrix[x][y] = this._getAdjacencyMatrixValue(results.reports, x, y);
             if (adjacencyMatrix[x][y] === 1)
             {
                density += 1;
@@ -145,8 +201,8 @@ export default class PluginMetricsProject
          });
       });
 
-      result.adjacencyMatrix = adjacencyMatrix;
-      result.firstOrderDensity = this.percentifyDensity(density, adjacencyMatrix);
+      results.adjacencyMatrix = adjacencyMatrix;
+      results.firstOrderDensity = this._percentifyDensity(density, adjacencyMatrix);
    }
 
 
@@ -155,12 +211,14 @@ export default class PluginMetricsProject
     * successive raising of powers.
     *
     * @param {object}   results - The ESComplexProject results data.
+    *
+    * @private
     */
-   createVisibilityMatrix(results)
+   _createVisibilityMatrix(results)
    {
       let changeCost = 0, i, j, k, visibilityMatrix;
 
-      visibilityMatrix = this.adjacencyToDistMatrix(results.adjacencyMatrix);
+      visibilityMatrix = this._adjacencyToDistMatrix(results.adjacencyMatrix);
       const matrixLen = visibilityMatrix.length;
 
       for (k = 0; k < matrixLen; k += 1)
@@ -197,47 +255,76 @@ export default class PluginMetricsProject
       });
 
       results.visibilityMatrix = visibilityMatrix;
-      results.changeCost = this.percentifyDensity(changeCost, visibilityMatrix);
+      results.changeCost = this._percentifyDensity(changeCost, visibilityMatrix);
    }
 
-   doesDependencyExist(from, to)
+   /**
+    * doesDependencyExist
+    *
+    * @param {object}   from -
+    * @param {object}   to -
+    *
+    * @returns {*}
+    * @private
+    */
+   _doesDependencyExist(from, to)
    {
       return from.dependencies.reduce((result, dependency) =>
       {
-         if (result === false) { return this.checkDependency(from.path, dependency, to.path); }
+         if (result === false) { return this._checkDependency(from.path, dependency, to.path); }
 
          return true;
       }, false);
    }
 
-   getAdjacencyMatrixValue(reports, x, y)
+   /**
+    * getAdjacencyMatrixValue
+    *
+    * @param {object}   reports - The ESComplexModule reports data.
+    * @param {number}   x -
+    * @param {number}   y -
+    *
+    * @returns {number}
+    * @private
+    */
+   _getAdjacencyMatrixValue(reports, x, y)
    {
       if (x === y) { return 0; }
 
-      if (this.doesDependencyExist(reports[x], reports[y])) { return 1; }
+      if (this._doesDependencyExist(reports[x], reports[y])) { return 1; }
 
       return 0;
    }
 
-   getMedian(values)
+   /**
+    * Gets the median value from the given array after sorting.
+    *
+    * @param {Array<number>}  values -
+    *
+    * @returns {number}
+    * @private
+    */
+   _getMedian(values)
    {
-      values.sort(this.compareNumbers);
+      values.sort(this._compareNumbers);
 
       // Checks of values.length is odd.
-      if (values.length % 2)
-      {
-         return values[(values.length - 1) / 2];
-      }
+      if (values.length % 2) { return values[(values.length - 1) / 2]; }
 
       return (values[(values.length - 2) / 2] + values[values.length / 2]) / 2;
    }
 
-   isCommonJSDependency(dependency)
-   {
-      return dependency.type === 'cjs';
-   }
-
-   isDependency(from, dependency, to)
+   /**
+    * isDependency
+    *
+    * @param {string}   from -
+    * @param {object}   dependency -
+    * @param {string}   to -
+    *
+    * @returns {boolean}
+    * @private
+    */
+   _isDependency(from, dependency, to)
    {
       let dependencyPath = dependency.path;
 
@@ -246,49 +333,74 @@ export default class PluginMetricsProject
       return path.resolve(path.dirname(from), dependencyPath) === to;
    }
 
-   isInternalCommonJSDependency(dependency)
+   /**
+    * isInternalCommonJSDependency
+    *
+    * @param {object}   dependency -
+    *
+    * @returns {boolean}
+    * @private
+    */
+   _isInternalCommonJSDependency(dependency)
    {
       return dependency.path[0] === '.' &&
        (dependency.path[1] === path.sep || (dependency.path[1] === '.' && dependency.path[2] === path.sep));
    }
 
-   percentify(value, limit)
+   /**
+    * percentify
+    *
+    * @param {number}   value -
+    * @param {number}   limit -
+    *
+    * @returns {number}
+    * @private
+    */
+   _percentify(value, limit)
    {
-      if (limit === 0) { return 0; }
-
-      return (value / limit) * 100;
+      return limit === 0 ? 0 : (value / limit) * 100;
    }
 
-   percentifyDensity(density, matrix)
+   /**
+    * percentifyDensity
+    *
+    * @param {number}   density -
+    * @param {Array}    matrix -
+    *
+    * @returns {number}
+    * @private
+    */
+   _percentifyDensity(density, matrix)
    {
-      return this.percentify(density, matrix.length * matrix.length);
+      return this._percentify(density, matrix.length * matrix.length);
    }
 
-   setCoreSize(result)
+   /**
+    * Calculates core size.
+    *
+    * @param {object}   results - The ESComplexProject results data.
+    *
+    * @private
+    */
+   _setCoreSize(results)
    {
-      if (result.firstOrderDensity === 0)
+      if (results.firstOrderDensity === 0)
       {
-         result.coreSize = 0;
+         results.coreSize = 0;
          return;
       }
 
-      const fanIn = new Array(result.visibilityMatrix.length);
-      const fanOut = new Array(result.visibilityMatrix.length);
+      const fanIn = new Array(results.visibilityMatrix.length);
+      const fanOut = new Array(results.visibilityMatrix.length);
       const boundaries = {};
       let coreSize = 0;
 
-      result.visibilityMatrix.forEach((row, rowIndex) =>
+      results.visibilityMatrix.forEach((row, rowIndex) =>
       {
          fanIn[rowIndex] = row.reduce((sum, value, valueIndex) =>
          {
-            if (rowIndex === 0)
-            {
-               fanOut[valueIndex] = value;
-            }
-            else
-            {
-               fanOut[valueIndex] += value;
-            }
+            if (rowIndex === 0) { fanOut[valueIndex] = value; }
+            else { fanOut[valueIndex] += value; }
 
             return sum + value;
          }, 0);
@@ -296,17 +408,14 @@ export default class PluginMetricsProject
 
       // Boundary values can also be chosen by looking for discontinuity in the
       // distribution of values, but I've chosen the median to keep it simple.
-      boundaries.fanIn = this.getMedian(fanIn.slice());
-      boundaries.fanOut = this.getMedian(fanOut.slice());
+      boundaries.fanIn = this._getMedian(fanIn.slice());
+      boundaries.fanOut = this._getMedian(fanOut.slice());
 
-      result.visibilityMatrix.forEach((ignore, index) =>
+      results.visibilityMatrix.forEach((ignore, index) =>
       {
-         if (fanIn[index] >= boundaries.fanIn && fanOut[index] >= boundaries.fanOut)
-         {
-            coreSize += 1;
-         }
+         if (fanIn[index] >= boundaries.fanIn && fanOut[index] >= boundaries.fanOut) { coreSize += 1; }
       });
 
-      result.coreSize = this.percentify(coreSize, result.visibilityMatrix.length);
+      results.coreSize = this._percentify(coreSize, results.visibilityMatrix.length);
    }
 }
