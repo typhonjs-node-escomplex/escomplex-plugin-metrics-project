@@ -1,6 +1,9 @@
 'use strict';
 import { assert }             from 'chai';
 import fs                     from 'fs';
+import path                   from 'path';
+
+import ProjectResult          from 'typhonjs-escomplex-commons/src/project/result/ProjectResult';
 
 import PluginMetricsProject   from '../../src/PluginMetricsProject.js';
 
@@ -65,7 +68,9 @@ pluginData.forEach((plugin) =>
          const instance = new plugin.PluginClass();
 
          const resultsAfter = JSON.parse(fs.readFileSync('./test/fixture/results-after.json', 'utf8'));
-         const resultsBefore = JSON.parse(fs.readFileSync('./test/fixture/results-before.json', 'utf8'));
+
+         const resultsBefore = new ProjectResult.parse(
+          JSON.parse(fs.readFileSync('./test/fixture/results-before.json', 'utf8')));
 
          /**
           * Bootstraps the ESComplexProject runtime and fudges processing project results.
@@ -82,11 +87,13 @@ pluginData.forEach((plugin) =>
 
             instance.onProjectStart(event);
 
-            event = { data: { results: resultsBefore } };
+            event = { data: { pathModule: path, results: resultsBefore } };
 
             instance.onProjectEnd(event);
 
-            assert.strictEqual(JSON.stringify(event.data.results), JSON.stringify(resultsAfter));
+            resultsBefore.finalize();
+
+            assert.strictEqual(JSON.stringify(resultsBefore), JSON.stringify(resultsAfter));
          });
       });
    });

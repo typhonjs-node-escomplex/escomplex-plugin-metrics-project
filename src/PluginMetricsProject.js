@@ -115,12 +115,12 @@ export default class PluginMetricsProject
    {
       const divisor = projectResult.reports.length === 0 ? 1 : projectResult.reports.length;
 
-      const sums = ModuleReport.getProjectMetricSums();
+      const { sums, indices } =  ModuleReport.getMaintainabilityMetrics();
 
       // Defer to ModuleReport to sum all relevant module metrics applicable to ProjectResult.
-      projectResult.reports.forEach((report) => { report.sumMetrics(sums); });
+      projectResult.reports.forEach((report) => { report.sumMetrics(sums, indices); });
 
-      Object.keys(sums).forEach((key) => { projectResult[key] = sums[key] / divisor; });
+      Object.keys(indices).forEach((key) => { projectResult[key] = sums[indices[key]] / divisor; });
    }
 
    /**
@@ -256,6 +256,23 @@ export default class PluginMetricsProject
       let matchedDependency = false;
       let fromModuleReport_dirname = pathModule.dirname(fromModuleReport.srcPath);
 
+      // First test for srcPathAlias which is the case when an NPM or JSPM module has a main entry and is mapped to a
+      // given name or alias.
+      for (let cntr = 0; cntr < fromModuleReport.dependencies.length; cntr++)
+      {
+         const depPath = fromModuleReport.dependencies[cntr].path;
+
+         if (typeof toModuleReport.srcPathAlias === 'string' && depPath === toModuleReport.srcPathAlias)
+         {
+            matchedDependency = true;
+            break;
+         }
+      }
+
+      // Exit early if alias match was found above.
+      if (matchedDependency) { return true; }
+
+      // Now test for srcPath matches.
       for (let cntr = 0; cntr < fromModuleReport.dependencies.length; cntr++)
       {
          let depPath = fromModuleReport.dependencies[cntr].path;

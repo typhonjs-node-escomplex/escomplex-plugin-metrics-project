@@ -1,4 +1,12 @@
 {
   "presets": ["es2015"],
-  "plugins": ["add-module-exports"]
+  "plugins":
+  [
+    "add-module-exports",
+    ["module-alias",
+      [
+        { "src": "npm:typhonjs-escomplex-commons/dist", "expose": "typhonjs-escomplex-commons/src" }
+      ]
+    ]
+  ]
 }
