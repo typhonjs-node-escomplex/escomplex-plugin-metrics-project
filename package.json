@@ -35,8 +35,10 @@
     "test-coverage": "babel-node ./node_modules/typhonjs-npm-scripts-test-mocha/scripts/mocha-istanbul.js"
   },
   "keywords": [
+    "typhonjs",
     "escomplex",
     "plugin",
+    "project",
     "metrics"
   ],
   "files": [
