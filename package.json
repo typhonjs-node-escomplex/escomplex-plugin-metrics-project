@@ -1,6 +1,6 @@
 {
   "name": "escomplex-plugin-metrics-project",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "homepage": "https://github.com/typhonjs-node-escomplex/escomplex-plugin-metrics-project/",
   "description": "Provides the core project metric / report generation plugin for typhonjs-escomplex project processing.",
   "license": "MPL-2.0",
@@ -20,10 +20,11 @@
     }
   ],
   "dependencies": {
-    "typhonjs-escomplex-commons": "^0.0.8"
+    "typhonjs-escomplex-commons": "^0.0.10"
   },
   "devDependencies": {
     "typhonjs-config-eslint": "^0.4.0",
+    "typhonjs-escomplex-test-data": "git+https://git@github.com/typhonjs-node-escomplex/typhonjs-escomplex-test-data.git",
     "typhonjs-npm-build-test": "^0.3.0"
   },
   "scripts": {
@@ -38,12 +39,13 @@
     "typhonjs",
     "escomplex",
     "plugin",
-    "project",
-    "metrics"
+    "metrics",
+    "project"
   ],
   "files": [
     "dist",
     "src",
+    ".esdocrc",
     "AUTHORS.md"
   ],
   "directories": {},
