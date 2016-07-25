@@ -1,5 +1,5 @@
 import MathUtil      from 'typhonjs-escomplex-commons/src/utils/MathUtil';
-import ModuleReport  from 'typhonjs-escomplex-commons/src/module/report/ModuleReport';
+import ObjectUtil    from 'typhonjs-escomplex-commons/src/utils/ObjectUtil';
 
 /**
  * Provides default project metrics gathering and calculation.
@@ -115,12 +115,23 @@ export default class PluginMetricsProject
    {
       const divisor = projectResult.reports.length === 0 ? 1 : projectResult.reports.length;
 
-      const { sums, indices } =  ModuleReport.getMaintainabilityMetrics();
+      const moduleAverage = projectResult.moduleAverage;
+      const moduleAverageKeys = ObjectUtil.getAccessorList(moduleAverage);
 
       // Defer to ModuleReport to sum all relevant module metrics applicable to ProjectResult.
-      projectResult.reports.forEach((report) => { report.sumMetrics(sums, indices); });
+      projectResult.reports.forEach((report) =>
+      {
+         moduleAverageKeys.forEach((averageKey) =>
+         {
+            const targetValue = ObjectUtil.safeAccess(report, averageKey, 0);
+            ObjectUtil.safeSet(moduleAverage, averageKey, targetValue, 'add');
+         });
+      });
 
-      Object.keys(indices).forEach((key) => { projectResult[key] = sums[indices[key]] / divisor; });
+      moduleAverageKeys.forEach((averageKey) =>
+      {
+         ObjectUtil.safeSet(moduleAverage, averageKey, divisor, 'div');
+      });
    }
 
    /**
