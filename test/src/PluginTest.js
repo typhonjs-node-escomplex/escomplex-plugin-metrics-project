@@ -1,4 +1,3 @@
-'use strict';
 import { assert }             from 'chai';
 import fs                     from 'fs';
 import path                   from 'path';
@@ -69,8 +68,8 @@ pluginData.forEach((plugin) =>
 
          const resultsAfter = JSON.parse(fs.readFileSync('./test/fixture/results-after.json', 'utf8'));
 
-         const resultsBefore = new ProjectResult.parse(
-          JSON.parse(fs.readFileSync('./test/fixture/results-before.json', 'utf8')));
+         const resultsBefore = ProjectResult.parse(require(
+          'typhonjs-escomplex-test-data/files/large-project/results/results-no-calculation'));
 
          /**
           * Bootstraps the ESComplexProject runtime and fudges processing project results.
