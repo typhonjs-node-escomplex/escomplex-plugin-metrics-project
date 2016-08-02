@@ -2,7 +2,7 @@ import { assert }             from 'chai';
 import fs                     from 'fs';
 import path                   from 'path';
 
-import ProjectResult          from 'typhonjs-escomplex-commons/src/project/result/ProjectResult';
+import ProjectReport          from 'typhonjs-escomplex-commons/src/project/report/ProjectReport';
 
 import PluginMetricsProject   from '../../src/PluginMetricsProject.js';
 
@@ -66,10 +66,10 @@ pluginData.forEach((plugin) =>
       {
          const instance = new plugin.PluginClass();
 
-         const resultsAfter = JSON.parse(fs.readFileSync('./test/fixture/results-after.json', 'utf8'));
+         const resultsAfter = require('typhonjs-escomplex-test-data/files/large-project/json/project');
 
-         const resultsBefore = ProjectResult.parse(require(
-          'typhonjs-escomplex-test-data/files/large-project/results/results-no-calculation'));
+         const resultsBefore = ProjectReport.parse(require(
+          'typhonjs-escomplex-test-data/files/large-project/json/project-no-calculation'));
 
          /**
           * Bootstraps the ESComplexProject runtime and fudges processing project results.
@@ -86,9 +86,12 @@ pluginData.forEach((plugin) =>
 
             instance.onProjectStart(event);
 
-            event = { data: { pathModule: path, results: resultsBefore } };
+            event = { data: { pathModule: path, projectReport: resultsBefore } };
 
             instance.onProjectEnd(event);
+
+            // ESComplexProject on processing results will set skipCalculation to false.
+            resultsBefore.settings.skipCalculation = false;
 
             resultsBefore.finalize();
 
