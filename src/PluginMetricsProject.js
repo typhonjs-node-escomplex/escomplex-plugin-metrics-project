@@ -30,24 +30,24 @@ export default class PluginMetricsProject
    }
 
    /**
-    * Performs final calculations based on collected results data.
+    * Performs final calculations based on collected project report data.
     *
     * @param {object}   ev - escomplex plugin event data.
     */
    onProjectEnd(ev)
    {
       const pathModule = ev.data.pathModule;
-      const projectResult = ev.data.results;
+      const projectReport = ev.data.projectReport;
 
-      const adjacencyMatrix = this._calculateAdjacencyMatrix(pathModule, projectResult);
+      const adjacencyMatrix = this._calculateAdjacencyMatrix(pathModule, projectReport);
 
       if (!this.settings.noCoreSize)
       {
-         const visibilityMatrix = this._calculateVisibilityMatrix(projectResult, adjacencyMatrix);
-         this._calculateCoreSize(projectResult, visibilityMatrix);
+         const visibilityMatrix = this._calculateVisibilityMatrix(projectReport, adjacencyMatrix);
+         this._calculateCoreSize(projectReport, visibilityMatrix);
       }
 
-      this._calculateAverages(projectResult);
+      this._calculateAverages(projectReport);
    }
 
    /**
@@ -68,20 +68,20 @@ export default class PluginMetricsProject
 
    /**
     * Calculates an adjacency matrix for all modules based on ES Module and CommonJS dependencies also storing a
-    * compacted while returning the matrix for further calculation. Each row index corresponds to the same report index.
-    * Each row entry corresponds to a report index. These relationships dictate the dependencies between all
-    * report ModuleReports given the source paths.
+    * compacted while returning the matrix for further calculation. Each row index corresponds to the same module index.
+    * Each row entry corresponds to a module index. These relationships dictate the dependencies between all
+    * module ModuleReports given the source paths.
     *
     * @param {object}   pathModule - A module that conforms to the Node path API.
-    * @param {object}   projectResult - The ProjectResult being processed.
+    * @param {object}   projectReport - The ProjectResult being processed.
     *
     * @returns {Array<Array<number>>}
     * @private
     */
-   _calculateAdjacencyMatrix(pathModule, projectResult)
+   _calculateAdjacencyMatrix(pathModule, projectReport)
    {
-      const reports = projectResult.reports;
-      const length = reports.length;
+      const modules = projectReport.modules;
+      const length = modules.length;
 
       const adjacencyMatrix = MathUtil.create2DArray(length, 0);
 
@@ -91,15 +91,15 @@ export default class PluginMetricsProject
       {
          for (let y = 0; y < length; y++)
          {
-            adjacencyMatrix[x][y] = x !== y && this._doesDependencyExist(pathModule, reports[x], reports[y]) ? 1 : 0;
+            adjacencyMatrix[x][y] = x !== y && this._doesDependencyExist(pathModule, modules[x], modules[y]) ? 1 : 0;
 
             if (adjacencyMatrix[x][y] === 1) { density += 1; }
          }
       }
 
-      projectResult.adjacencyList = MathUtil.compactMatrix(adjacencyMatrix);
+      projectReport.adjacencyList = MathUtil.compactMatrix(adjacencyMatrix);
 
-      projectResult.firstOrderDensity = MathUtil.getPercent(density, length * length);
+      projectReport.firstOrderDensity = MathUtil.getPercent(density, length * length);
 
       return adjacencyMatrix;
    }
@@ -107,23 +107,23 @@ export default class PluginMetricsProject
    /**
     * Calculates average ModuleReport metrics that are applicable to ProjectResult.
     *
-    * @param {object}   projectResult - The ProjectResult being processed.
+    * @param {object}   projectReport - The ProjectResult being processed.
     *
     * @private
     */
-   _calculateAverages(projectResult)
+   _calculateAverages(projectReport)
    {
-      const divisor = projectResult.reports.length === 0 ? 1 : projectResult.reports.length;
+      const divisor = projectReport.modules.length === 0 ? 1 : projectReport.modules.length;
 
-      const moduleAverage = projectResult.moduleAverage;
+      const moduleAverage = projectReport.moduleAverage;
       const moduleAverageKeys = ObjectUtil.getAccessorList(moduleAverage);
 
       // Defer to ModuleReport to sum all relevant module metrics applicable to ProjectResult.
-      projectResult.reports.forEach((report) =>
+      projectReport.modules.forEach((module) =>
       {
          moduleAverageKeys.forEach((averageKey) =>
          {
-            const targetValue = ObjectUtil.safeAccess(report, averageKey, 0);
+            const targetValue = ObjectUtil.safeAccess(module, averageKey, 0);
             ObjectUtil.safeSet(moduleAverage, averageKey, targetValue, 'add');
          });
       });
@@ -138,16 +138,16 @@ export default class PluginMetricsProject
     * Calculates core size which is the percentage of modules / files that are both widely depended on and themselves
     * depend on other modules. Lower is better.
     *
-    * @param {object}               projectResult - The ProjectResult being processed.
+    * @param {object}               projectReport - The ProjectResult being processed.
     * @param {Array<Array<number>>} visibilityMatrix - The calculated visibilityMatrix.
     *
     * @private
     */
-   _calculateCoreSize(projectResult, visibilityMatrix)
+   _calculateCoreSize(projectReport, visibilityMatrix)
    {
-      if (projectResult.firstOrderDensity === 0)
+      if (projectReport.firstOrderDensity === 0)
       {
-         projectResult.coreSize = 0;
+         projectReport.coreSize = 0;
          return;
       }
 
@@ -179,25 +179,25 @@ export default class PluginMetricsProject
          if (fanIn[rowIndex] >= boundaries.fanIn && fanOut[rowIndex] >= boundaries.fanOut) { coreSize += 1; }
       }
 
-      projectResult.coreSize = MathUtil.getPercent(coreSize, length);
+      projectReport.coreSize = MathUtil.getPercent(coreSize, length);
    }
 
    /**
-    * Stores a compacted form of the visibility matrix. Each row index corresponds to the same report index.
-    * Each row entry corresponds to a report index. These relationships dictate the reverse visibility between all
-    * report ModuleReports which may indirectly impact the given module / file. The full matrix is returned for further
+    * Stores a compacted form of the visibility matrix. Each row index corresponds to the same module index.
+    * Each row entry corresponds to a module index. These relationships dictate the reverse visibility between all
+    * module ModuleReports which may indirectly impact the given module / file. The full matrix is returned for further
     * calculation.
     *
     * Implementation of Floyd Warshall algorithm for calculating visibility matrix in O(n^3) instead of O(n^4) with
     * successive raising of powers.
     *
-    * @param {object}               projectResult - The ProjectResult being processed.
+    * @param {object}               projectReport - The ProjectResult being processed.
     * @param {Array<Array<number>>} adjacencyMatrix - The calculated adjacencyMatrix.
     *
     * @return {Array<Array<number>>}
     * @private
     */
-   _calculateVisibilityMatrix(projectResult, adjacencyMatrix)
+   _calculateVisibilityMatrix(projectReport, adjacencyMatrix)
    {
       let changeCost = 0;
 
@@ -244,9 +244,9 @@ export default class PluginMetricsProject
          }
       }
 
-      projectResult.visibilityList = MathUtil.compactMatrix(visibilityMatrix);
+      projectReport.visibilityList = MathUtil.compactMatrix(visibilityMatrix);
 
-      projectResult.changeCost = MathUtil.getPercent(changeCost, length * length);
+      projectReport.changeCost = MathUtil.getPercent(changeCost, length * length);
 
       return visibilityMatrix;
    }
