@@ -32,11 +32,6 @@ pluginData.forEach((plugin) =>
          {
             assert.isFunction(instance.onProjectEnd);
          });
-
-         test('plugin function onProjectStart is exported', () =>
-         {
-            assert.isFunction(instance.onProjectStart);
-         });
       });
 
       suite('method invocation:', () =>
@@ -81,11 +76,7 @@ pluginData.forEach((plugin) =>
 
             const settings = event.data.settings;
 
-            event = { data: { settings } };
-
-            instance.onProjectStart(event);
-
-            event = { data: { pathModule: path, projectReport: resultsBefore } };
+            event = { data: { pathModule: path, projectReport: resultsBefore, settings } };
 
             instance.onProjectEnd(event);
 
