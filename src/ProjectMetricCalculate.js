@@ -3,9 +3,9 @@ import ObjectUtil    from 'typhonjs-escomplex-commons/src/utils/ObjectUtil';
 
 export default class ProjectMetricCalculate
 {
-   static calculate(pathModule, projectReport, settings)
+   static calculate(projectReport, pathModule, settings)
    {
-      const adjacencyMatrix = ProjectMetricCalculate.calculateAdjacencyMatrix(pathModule, projectReport);
+      const adjacencyMatrix = ProjectMetricCalculate.calculateAdjacencyMatrix(projectReport, pathModule);
 
       if (!settings.noCoreSize)
       {
@@ -22,13 +22,13 @@ export default class ProjectMetricCalculate
     * Each row entry corresponds to a module index. These relationships dictate the dependencies between all
     * module ModuleReports given the source paths.
     *
-    * @param {object}   pathModule - A module that conforms to the Node path API.
     * @param {object}   projectReport - The ProjectResult being processed.
+    * @param {object}   pathModule - A module that conforms to the Node path API.
     *
     * @returns {Array<Array<number>>}
     * @private
     */
-   static calculateAdjacencyMatrix(pathModule, projectReport)
+   static calculateAdjacencyMatrix(projectReport, pathModule)
    {
       const modules = projectReport.modules;
       const length = modules.length;

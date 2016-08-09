@@ -33,10 +33,10 @@ export default class PluginMetricsProject
     */
    onProjectEnd(ev)
    {
-      const pathModule = ev.data.pathModule;
       const projectReport = ev.data.projectReport;
+      const pathModule = ev.data.pathModule;
       const settings = ev.data.settings;
 
-      ProjectMetricCalculate.calculate(pathModule, projectReport, settings);
+      ProjectMetricCalculate.calculate(projectReport, pathModule, settings);
    }
 }
