@@ -1,3 +1,4 @@
+import ProjectMetricAverage   from './ProjectMetricAverage';
 import ProjectMetricCalculate from './ProjectMetricCalculate';
 
 /**
@@ -16,8 +17,7 @@ export default class PluginMetricsProject
     *
     * The following options are:
     * ```
-    * (boolean)   newmi - Boolean indicating whether the maintainability index should be rebased on a scale from
-    *                     0 to 100; defaults to false.
+    * (boolean)   noCoreSize - Boolean indicating whether the visibility list is not calculated; default (false).
     * ```
     */
    onConfigure(ev)
@@ -27,16 +27,22 @@ export default class PluginMetricsProject
    }
 
    /**
-    * Performs final calculations based on collected project report data.
+    * Performs average calculations based on collected report data.
     *
     * @param {object}   ev - escomplex plugin event data.
     */
-   onProjectEnd(ev)
+   onProjectAverage(ev)
    {
-      const projectReport = ev.data.projectReport;
-      const pathModule = ev.data.pathModule;
-      const settings = ev.data.settings;
+      ProjectMetricAverage.calculate(ev.data.projectReport);
+   }
 
-      ProjectMetricCalculate.calculate(projectReport, pathModule, settings);
+   /**
+    * Performs initial calculations based on collected report data.
+    *
+    * @param {object}   ev - escomplex plugin event data.
+    */
+   onProjectCalculate(ev)
+   {
+      ProjectMetricCalculate.calculate(ev.data.projectReport, ev.data.pathModule, ev.data.settings);
    }
 }

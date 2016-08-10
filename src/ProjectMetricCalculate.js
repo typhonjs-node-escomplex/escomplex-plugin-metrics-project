@@ -1,5 +1,4 @@
-import MathUtil      from 'typhonjs-escomplex-commons/src/utils/MathUtil';
-import ObjectUtil    from 'typhonjs-escomplex-commons/src/utils/ObjectUtil';
+import MathUtil   from 'typhonjs-escomplex-commons/src/utils/MathUtil';
 
 export default class ProjectMetricCalculate
 {
@@ -12,8 +11,6 @@ export default class ProjectMetricCalculate
          const visibilityMatrix = ProjectMetricCalculate.calculateVisibilityMatrix(projectReport, adjacencyMatrix);
          ProjectMetricCalculate.calculateCoreSize(projectReport, visibilityMatrix);
       }
-
-      ProjectMetricCalculate.calculateAverages(projectReport);
    }
 
    /**
@@ -22,7 +19,7 @@ export default class ProjectMetricCalculate
     * Each row entry corresponds to a module index. These relationships dictate the dependencies between all
     * module ModuleReports given the source paths.
     *
-    * @param {object}   projectReport - The ProjectResult being processed.
+    * @param {object}   projectReport - The project report being processed.
     * @param {object}   pathModule - A module that conforms to the Node path API.
     *
     * @returns {Array<Array<number>>}
@@ -56,40 +53,10 @@ export default class ProjectMetricCalculate
    }
 
    /**
-    * Calculates average ModuleReport metrics that are applicable to ProjectResult.
-    *
-    * @param {object}   projectReport - The ProjectResult being processed.
-    *
-    * @private
-    */
-   static calculateAverages(projectReport)
-   {
-      const divisor = projectReport.modules.length === 0 ? 1 : projectReport.modules.length;
-
-      const moduleAverage = projectReport.moduleAverage;
-      const moduleAverageKeys = ObjectUtil.getAccessorList(moduleAverage);
-
-      // Defer to ModuleReport to sum all relevant module metrics applicable to ProjectResult.
-      projectReport.modules.forEach((module) =>
-      {
-         moduleAverageKeys.forEach((averageKey) =>
-         {
-            const targetValue = ObjectUtil.safeAccess(module, averageKey, 0);
-            ObjectUtil.safeSet(moduleAverage, averageKey, targetValue, 'add');
-         });
-      });
-
-      moduleAverageKeys.forEach((averageKey) =>
-      {
-         ObjectUtil.safeSet(moduleAverage, averageKey, divisor, 'div');
-      });
-   }
-
-   /**
     * Calculates core size which is the percentage of modules / files that are both widely depended on and themselves
     * depend on other modules. Lower is better.
     *
-    * @param {object}               projectReport - The ProjectResult being processed.
+    * @param {object}               projectReport - The project report being processed.
     * @param {Array<Array<number>>} visibilityMatrix - The calculated visibilityMatrix.
     *
     * @private
@@ -142,7 +109,7 @@ export default class ProjectMetricCalculate
     * Implementation of Floyd Warshall algorithm for calculating visibility matrix in O(n^3) instead of O(n^4) with
     * successive raising of powers.
     *
-    * @param {object}               projectReport - The ProjectResult being processed.
+    * @param {object}               projectReport - The project report being processed.
     * @param {Array<Array<number>>} adjacencyMatrix - The calculated adjacencyMatrix.
     *
     * @return {Array<Array<number>>}
