@@ -28,9 +28,14 @@ pluginData.forEach((plugin) =>
             assert.isFunction(instance.onConfigure);
          });
 
-         test('plugin function onProjectEnd is exported', () =>
+         test('plugin function onProjectCalculate is exported', () =>
          {
-            assert.isFunction(instance.onProjectEnd);
+            assert.isFunction(instance.onProjectCalculate);
+         });
+
+         test('plugin function onProjectAverage is exported', () =>
+         {
+            assert.isFunction(instance.onProjectAverage);
          });
       });
 
@@ -67,8 +72,11 @@ pluginData.forEach((plugin) =>
 
          /**
           * Bootstraps the ESComplexProject runtime and fudges processing project results.
+          *
+          * Note: That the control flow below exactly replicates typhonjs-escomplex-project / ESComplexProject. If there
+          * are any future changes to ESComplexProject the below control flow will need to be modified accordingly.
           */
-         test('verify onProjectEnd results', () =>
+         test('verify calculation results', () =>
          {
             let event = { data: { options: {}, settings: {} } };
 
@@ -78,7 +86,11 @@ pluginData.forEach((plugin) =>
 
             event = { data: { pathModule: path, projectReport: resultsBefore, settings } };
 
-            instance.onProjectEnd(event);
+            // Allow all plugins to have a calculation pass at the project report.
+            instance.onProjectCalculate(event);
+
+            // Allow all plugins to have a pass at the project report to calculate any averaged data.
+            instance.onProjectAverage(event);
 
             // ESComplexProject on processing results will set skipCalculation to false.
             resultsBefore.settings.skipCalculation = false;
