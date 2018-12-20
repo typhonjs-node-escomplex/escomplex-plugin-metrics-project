@@ -26,7 +26,8 @@
           "cwd": "babelrc",
           "alias":
           {
-            "typhonjs-escomplex-commons/src": "../typhonjs-escomplex-commons/src"
+            "typhonjs-escomplex-commons/src": "../typhonjs-escomplex-commons/src",
+            "typhonjs-escomplex-test-data": "../typhonjs-escomplex-test-data"
           }
         }],
         "transform-runtime"
