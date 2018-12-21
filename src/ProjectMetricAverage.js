@@ -1,5 +1,8 @@
 import ObjectUtil from 'typhonjs-escomplex-commons/src/utils/ObjectUtil';
 
+/**
+ * ProjectMetricCalculate
+ */
 export default class ProjectMetricCalculate
 {
    /**

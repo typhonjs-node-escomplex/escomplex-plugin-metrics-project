@@ -1,7 +1,17 @@
 import MathUtil   from 'typhonjs-escomplex-commons/src/utils/MathUtil';
 
+/**
+ * ProjectMetricCalculate
+ */
 export default class ProjectMetricCalculate
 {
+   /**
+    * Calculates project report.
+    *
+    * @param {ProjectReport}  projectReport - Project report to calculate
+    * @param {object}         pathModule -
+    * @param {object}         settings -
+    */
    static calculate(projectReport, pathModule, settings)
    {
       const adjacencyMatrix = ProjectMetricCalculate.calculateAdjacencyMatrix(projectReport, pathModule);
